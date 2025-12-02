@@ -15,6 +15,7 @@ import Upcoming from "./pages/Upcoming";
 import Search from "./pages/Search";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +40,7 @@ const AppLayout = () => {
             <Route path="/search" element={<Search />} />
             <Route path="/news" element={<Placeholder title="News Feed" description="Latest anime news and updates coming soon" />} />
             <Route path="/community" element={<Placeholder title="Community Hub" description="Connect with other anime fans" />} />
-            <Route path="/settings" element={<Placeholder title="Settings" description="Customize your experience" />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/help" element={<Placeholder title="Help & Support" description="Get help and support" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
