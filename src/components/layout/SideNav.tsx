@@ -1,6 +1,7 @@
 import { Home, List, Search, TrendingUp, Star, Calendar, Newspaper, Users, Settings, Info, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/anime-runch-logo.png";
 
 interface SideNavProps {
   isOpen: boolean;
@@ -65,10 +66,13 @@ export const SideNav = ({ isOpen, onClose }: SideNavProps) => {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-sidebar-border sticky top-0 bg-sidebar z-10">
-          <h1 className="text-2xl font-black tracking-tight">
-            <span className="text-primary">ANIME</span>
-            <span className="text-secondary">RON</span>
-          </h1>
+          <div className="flex items-center gap-2">
+            <img src={logo} alt="Anime Runch" className="w-8 h-8" />
+            <h1 className="text-xl font-black tracking-tight">
+              <span className="text-primary">ANIME</span>
+              <span className="text-secondary"> RUNCH</span>
+            </h1>
+          </div>
           <button
             onClick={onClose}
             className="md:hidden p-2 rounded-lg hover:bg-sidebar-accent transition-colors"

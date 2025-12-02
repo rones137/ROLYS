@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { useTheme, Theme } from '@/hooks/useTheme';
 
 interface DisplayPreferences {
   theme: string;
@@ -18,8 +19,10 @@ interface DisplayPreferences {
 }
 
 const DisplaySettings = () => {
+  const { theme, changeTheme } = useTheme();
+  
   const [displaySettings, setDisplaySettings] = useState<DisplayPreferences>({
-    theme: 'dark',
+    theme: theme,
     language: 'en',
     contentFilter: 'all',
     autoplay: true,
@@ -32,9 +35,17 @@ const DisplaySettings = () => {
   useEffect(() => {
     const saved = localStorage.getItem('displaySettings');
     if (saved) {
-      setDisplaySettings(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      setDisplaySettings(parsed);
+      if (parsed.theme !== theme) {
+        changeTheme(parsed.theme);
+      }
     }
   }, []);
+
+  useEffect(() => {
+    setDisplaySettings(prev => ({ ...prev, theme }));
+  }, [theme]);
 
   const handleCheckboxChange = (key: keyof DisplayPreferences) => (checked: boolean) => {
     setDisplaySettings((prev) => ({ ...prev, [key]: checked }));
@@ -42,6 +53,7 @@ const DisplaySettings = () => {
 
   const handleSave = () => {
     localStorage.setItem('displaySettings', JSON.stringify(displaySettings));
+    changeTheme(displaySettings.theme as Theme);
     toast({
       title: 'Display settings saved',
       description: 'Your display preferences have been updated.',
@@ -89,7 +101,10 @@ const DisplaySettings = () => {
               return (
                 <button
                   key={option.value}
-                  onClick={() => setDisplaySettings((prev) => ({ ...prev, theme: option.value }))}
+                  onClick={() => {
+                    setDisplaySettings((prev) => ({ ...prev, theme: option.value }));
+                    changeTheme(option.value as Theme);
+                  }}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     displaySettings.theme === option.value
                       ? 'border-primary bg-primary/5'

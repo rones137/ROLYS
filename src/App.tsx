@@ -3,9 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SideNav } from "./components/layout/SideNav";
 import { TopHeader } from "./components/layout/TopHeader";
+import { useTheme } from "./hooks/useTheme";
 import Index from "./pages/Index";
 import MyList from "./pages/MyList";
 import Lookup from "./pages/Lookup";
@@ -21,6 +22,7 @@ const queryClient = new QueryClient();
 
 const AppLayout = () => {
   const [sideNavOpen, setSideNavOpen] = useState(false);
+  const { theme } = useTheme(); // Initialize theme
 
   return (
     <div className="min-h-screen bg-background">

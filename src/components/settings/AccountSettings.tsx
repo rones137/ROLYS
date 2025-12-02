@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { TwoFactorDialog } from '@/components/auth/TwoFactorDialog';
 
 interface AccountData {
   username: string;
@@ -28,13 +29,18 @@ const AccountSettings = () => {
 
   const [errors, setErrors] = useState<Partial<Record<keyof AccountData, string>>>({});
   const [isEditing, setIsEditing] = useState(false);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('accountSettings');
     if (saved) {
       setFormData(JSON.parse(saved));
     }
-  }, []);
+    
+    const user2FA = localStorage.getItem('user2FA');
+    setIs2FAEnabled(!!user2FA);
+  }, [show2FAModal]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -58,8 +64,8 @@ const AccountSettings = () => {
     localStorage.setItem('accountSettings', JSON.stringify(formData));
     setIsEditing(false);
     toast({
-      title: 'Settings saved',
-      description: 'Your account settings have been updated successfully.',
+      title: 'Profile updated',
+      description: 'Your account information has been saved successfully.',
     });
   };
 
@@ -212,14 +218,18 @@ const AccountSettings = () => {
           <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
             <div>
               <p className="font-medium text-foreground">Two-Factor Authentication</p>
-              <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
+              <p className="text-sm text-muted-foreground">
+                {is2FAEnabled ? 'Currently enabled' : 'Add an extra layer of security'}
+              </p>
             </div>
-            <Button variant="outline" size="sm">
-              Enable 2FA
+            <Button variant="outline" size="sm" onClick={() => setShow2FAModal(true)}>
+              {is2FAEnabled ? 'Manage 2FA' : 'Enable 2FA'}
             </Button>
           </div>
         </div>
       </div>
+      
+      <TwoFactorDialog open={show2FAModal} onOpenChange={setShow2FAModal} />
     </div>
   );
 };

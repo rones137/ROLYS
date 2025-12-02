@@ -5,6 +5,7 @@ import NotificationSettings from '@/components/settings/NotificationSettings';
 import DisplaySettings from '@/components/settings/DisplaySettings';
 import PrivacySettings from '@/components/settings/PrivacySettings';
 import DataManagement from '@/components/settings/DataManagement';
+import { Toaster } from '@/components/ui/toaster';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('account');
@@ -39,7 +40,7 @@ const Settings = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2 bg-gradient-primary bg-clip-text text-transparent">
-            Settings
+            Anime Runch Settings
           </h1>
           <p className="text-muted-foreground">Manage your account preferences and settings</p>
         </div>
@@ -78,6 +79,7 @@ const Settings = () => {
           </div>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 };
