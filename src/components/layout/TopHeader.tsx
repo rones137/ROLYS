@@ -1,8 +1,16 @@
-import { Menu, Search, Bell, LogIn } from "lucide-react";
+import { Menu, Search, Bell, LogIn, LogOut, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { SignInDialog } from "@/components/auth/SignInDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TopHeaderProps {
   onMenuClick: () => void;
@@ -10,13 +18,33 @@ interface TopHeaderProps {
 
 export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const auth = localStorage.getItem('isAuthenticated');
+    const userData = localStorage.getItem('user');
+    setIsAuthenticated(auth === 'true');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/');
   };
 
   return (
@@ -60,13 +88,44 @@ export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
             </Button>
 
-            <Button className="bg-gradient-secondary hover:opacity-90 font-semibold hidden sm:flex">
-              <LogIn className="w-4 h-4 mr-2" />
-              Sign In
-            </Button>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <User className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{user?.username || 'User'}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                className="bg-gradient-secondary hover:opacity-90 font-semibold hidden sm:flex"
+                onClick={() => setSignInOpen(true)}
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       </div>
+      
+      <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />
     </header>
   );
 };
