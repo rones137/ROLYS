@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SignInDialogProps {
   open: boolean;
@@ -20,25 +21,28 @@ export const SignInDialog = ({ open, onOpenChange }: SignInDialogProps) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate authentication
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Store user session
-    const user = {
+    const { error } = await supabase.auth.signInWithPassword({
       email: signInData.email,
-      username: signInData.email.split('@')[0],
-      loggedInAt: new Date().toISOString()
-    };
-    
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('isAuthenticated', 'true');
-    
+      password: signInData.password,
+    });
+
     setIsLoading(false);
+    
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     toast({
       title: 'Welcome back!',
       description: 'You have successfully signed in.',
     });
     onOpenChange(false);
+    setSignInData({ email: '', password: '' });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -63,24 +67,35 @@ export const SignInDialog = ({ open, onOpenChange }: SignInDialogProps) => {
     }
     
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Store user session
-    const user = {
+    const { error } = await supabase.auth.signUp({
       email: signUpData.email,
-      username: signUpData.username,
-      createdAt: new Date().toISOString()
-    };
-    
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('isAuthenticated', 'true');
+      password: signUpData.password,
+      options: {
+        data: {
+          username: signUpData.username,
+          display_name: signUpData.username,
+        }
+      }
+    });
     
     setIsLoading(false);
+    
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     toast({
       title: 'Account created!',
       description: 'Welcome to Anime Runch!',
     });
     onOpenChange(false);
+    setSignUpData({ email: '', password: '', confirmPassword: '', username: '' });
   };
 
   return (
