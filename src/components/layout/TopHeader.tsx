@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SignInDialog } from "@/components/auth/SignInDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,18 +22,22 @@ interface TopHeaderProps {
 export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [signInOpen, setSignInOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<Tables<'profiles'> | null>(null);
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const auth = localStorage.getItem('isAuthenticated');
-    const userData = localStorage.getItem('user');
-    setIsAuthenticated(auth === 'true');
-    if (userData) {
-      setUser(JSON.parse(userData));
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+        .then(({ data }) => setProfile(data));
+    } else {
+      setProfile(null);
     }
-  }, []);
+  }, [user]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,11 +46,8 @@ export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
     }
   };
 
-  const handleSignOut = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-    setUser(null);
+  const handleSignOut = async () => {
+    await signOut();
     navigate('/');
   };
 
@@ -88,7 +92,7 @@ export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />
             </Button>
 
-            {isAuthenticated ? (
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
@@ -97,8 +101,8 @@ export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{user?.username || 'User'}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    <p className="text-sm font-medium">{profile?.display_name || profile?.username || 'User'}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/settings')}>

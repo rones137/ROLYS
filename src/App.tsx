@@ -3,10 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SideNav } from "./components/layout/SideNav";
 import { TopHeader } from "./components/layout/TopHeader";
 import { useTheme } from "./hooks/useTheme";
+import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import MyList from "./pages/MyList";
 import Lookup from "./pages/Lookup";
@@ -14,6 +15,7 @@ import Rankings from "./pages/Rankings";
 import Trending from "./pages/Trending";
 import Upcoming from "./pages/Upcoming";
 import Search from "./pages/Search";
+import Community from "./pages/Community";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
@@ -22,7 +24,7 @@ const queryClient = new QueryClient();
 
 const AppLayout = () => {
   const [sideNavOpen, setSideNavOpen] = useState(false);
-  const { theme } = useTheme(); // Initialize theme
+  const { theme } = useTheme();
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,7 +43,7 @@ const AppLayout = () => {
             <Route path="/upcoming" element={<Upcoming />} />
             <Route path="/search" element={<Search />} />
             <Route path="/news" element={<Placeholder title="News Feed" description="Latest anime news and updates coming soon" />} />
-            <Route path="/community" element={<Placeholder title="Community Hub" description="Connect with other anime fans" />} />
+            <Route path="/community" element={<Community />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/help" element={<Placeholder title="Help & Support" description="Get help and support" />} />
             <Route path="*" element={<NotFound />} />
@@ -54,13 +56,15 @@ const AppLayout = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner position="top-right" />
-      <BrowserRouter>
-        <AppLayout />
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="top-right" />
+        <BrowserRouter>
+          <AppLayout />
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
