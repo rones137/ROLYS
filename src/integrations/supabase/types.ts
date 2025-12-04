@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      barint_chats: {
+        Row: {
+          created_at: string
+          id: string
+          messages: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          messages?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          messages?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comment_likes: {
         Row: {
           comment_id: string
@@ -289,6 +313,57 @@ export type Database = {
         }
         Relationships: []
       }
+      manga: {
+        Row: {
+          author_id: string
+          category: string | null
+          chapters: Json | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_nsfw: boolean | null
+          pages: Json | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          author_id: string
+          category?: string | null
+          chapters?: Json | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_nsfw?: boolean | null
+          pages?: Json | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string
+          category?: string | null
+          chapters?: Json | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_nsfw?: boolean | null
+          pages?: Json | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -321,6 +396,139 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      novels: {
+        Row: {
+          author_id: string
+          category: string | null
+          chapters: Json | null
+          content: Json | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_nsfw: boolean | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          author_id: string
+          category?: string | null
+          chapters?: Json | null
+          content?: Json | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_nsfw?: boolean | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string
+          category?: string | null
+          chapters?: Json | null
+          content?: Json | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_nsfw?: boolean | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_index: number
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_index: number
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_index?: number
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polls: {
+        Row: {
+          community_id: string | null
+          created_at: string
+          creator_id: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          is_closed: boolean | null
+          options: Json
+          poll_type: string | null
+          title: string
+          visibility: string | null
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          is_closed?: boolean | null
+          options?: Json
+          poll_type?: string | null
+          title: string
+          visibility?: string | null
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          is_closed?: boolean | null
+          options?: Json
+          poll_type?: string | null
+          title?: string
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polls_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_likes: {
         Row: {
@@ -451,6 +659,59 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      roomins: {
+        Row: {
+          banner_url: string | null
+          community_id: string
+          created_at: string
+          creator_id: string
+          description: string | null
+          id: string
+          is_restricted: boolean | null
+          member_count: number | null
+          name: string
+          rules: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          banner_url?: string | null
+          community_id: string
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          id?: string
+          is_restricted?: boolean | null
+          member_count?: number | null
+          name: string
+          rules?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          banner_url?: string | null
+          community_id?: string
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          id?: string
+          is_restricted?: boolean | null
+          member_count?: number | null
+          name?: string
+          rules?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roomins_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
