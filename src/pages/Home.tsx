@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { AnimeData } from "@/types/anime";
-import { getTopAnime, getSeasonNow, getAnimeByGenre, GENRES } from "@/lib/api";
+import { getTrendingAnime, getTopAnimeAniList, getCurrentSeasonAnime, getAnimeByGenre, convertToAnimeData, AniListAnime } from "@/lib/anilist";
 import { HeroCarousel } from "@/components/anime/HeroCarousel";
 import { AnimeCarousel } from "@/components/anime/AnimeCarousel";
-import { Flame, TrendingUp, Sparkles, Swords, Heart, Zap } from "lucide-react";
+import { Flame, TrendingUp, Sparkles, Swords, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const navigate = useNavigate();
   const [topAnimes, setTopAnimes] = useState<AnimeData[]>([]);
+  const [trendingAnimes, setTrendingAnimes] = useState<AnimeData[]>([]);
   const [seasonAnimes, setSeasonAnimes] = useState<AnimeData[]>([]);
   const [actionAnimes, setActionAnimes] = useState<AnimeData[]>([]);
   const [romanceAnimes, setRomanceAnimes] = useState<AnimeData[]>([]);
@@ -20,30 +21,26 @@ const Home = () => {
       try {
         setLoading(true);
 
-        // Load data in parallel with slight delays to respect rate limits
-        const [topResult, seasonResult] = await Promise.all([
-          getTopAnime(1),
-          getSeasonNow(),
+        const [trendingResult, topResult, seasonResult] = await Promise.all([
+          getTrendingAnime(1, 10),
+          getTopAnimeAniList(1, 25),
+          getCurrentSeasonAnime(1, 20),
         ]);
 
-        setTopAnimes(topResult.data || []);
-        setSeasonAnimes(seasonResult.data || []);
+        setTrendingAnimes((trendingResult.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
+        setTopAnimes((topResult.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
+        setSeasonAnimes((seasonResult.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
 
-        // Load genre-specific data with delays
-        setTimeout(async () => {
-          const actionResult = await getAnimeByGenre(GENRES.ACTION);
-          setActionAnimes(actionResult.data || []);
-        }, 500);
+        // Load genre-specific data
+        const [actionResult, romanceResult, fantasyResult] = await Promise.all([
+          getAnimeByGenre("Action", 1, 20),
+          getAnimeByGenre("Romance", 1, 20),
+          getAnimeByGenre("Fantasy", 1, 20),
+        ]);
 
-        setTimeout(async () => {
-          const romanceResult = await getAnimeByGenre(GENRES.ROMANCE);
-          setRomanceAnimes(romanceResult.data || []);
-        }, 1000);
-
-        setTimeout(async () => {
-          const fantasyResult = await getAnimeByGenre(GENRES.FANTASY);
-          setFantasyAnimes(fantasyResult.data || []);
-        }, 1500);
+        setActionAnimes((actionResult.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
+        setRomanceAnimes((romanceResult.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
+        setFantasyAnimes((fantasyResult.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
 
       } catch (error) {
         console.error("Failed to load anime data:", error);
@@ -56,8 +53,8 @@ const Home = () => {
   }, []);
 
   const handleAnimeClick = (anime: AnimeData) => {
-    // Navigate to a detail page (to be implemented)
-    console.log("Clicked anime:", anime);
+    const id = (anime as any).anilist_id || anime.mal_id;
+    navigate(`/anime/${id}`);
   };
 
   if (loading) {
@@ -74,8 +71,8 @@ const Home = () => {
   return (
     <div className="min-h-screen pb-12">
       {/* Hero Section */}
-      {topAnimes.length > 0 && (
-        <HeroCarousel animes={topAnimes.slice(0, 5)} onAnimeClick={handleAnimeClick} />
+      {trendingAnimes.length > 0 && (
+        <HeroCarousel animes={trendingAnimes.slice(0, 5)} onAnimeClick={handleAnimeClick} />
       )}
 
       {/* Content Sections */}
@@ -92,7 +89,7 @@ const Home = () => {
         {topAnimes.length > 0 && (
           <AnimeCarousel
             title="Top Rated Anime"
-            animes={topAnimes.slice(5, 30)}
+            animes={topAnimes}
             icon={<TrendingUp className="w-7 h-7" />}
             onAnimeClick={handleAnimeClick}
           />

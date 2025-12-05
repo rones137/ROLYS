@@ -3,10 +3,12 @@ import { MyListItem } from "@/types/anime";
 import { getMyList, updateMyListItem, removeFromMyList } from "@/lib/storage";
 import { AnimeCard } from "@/components/anime/AnimeCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { List, LayoutGrid } from "lucide-react";
+import { List } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const MyList = () => {
+  const navigate = useNavigate();
   const [myList, setMyList] = useState<MyListItem[]>([]);
   const [filter, setFilter] = useState<"all" | "watching" | "completed" | "plan-to-watch" | "dropped">("all");
 
@@ -19,16 +21,9 @@ const MyList = () => {
     setMyList(list);
   };
 
-  const handleRemove = (malId: number) => {
-    removeFromMyList(malId);
-    loadList();
-    toast.success("Removed from My List");
-  };
-
-  const handleStatusChange = (malId: number, status: MyListItem["watchStatus"]) => {
-    updateMyListItem(malId, { watchStatus: status });
-    loadList();
-    toast.success("Status updated");
+  const handleAnimeClick = (anime: MyListItem) => {
+    const id = (anime as any).anilist_id || anime.mal_id;
+    navigate(`/anime/${id}`);
   };
 
   const filteredList = filter === "all" 
@@ -95,7 +90,11 @@ const MyList = () => {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {filteredList.map((anime) => (
-            <AnimeCard key={anime.mal_id} anime={anime} />
+            <AnimeCard 
+              key={anime.mal_id} 
+              anime={anime} 
+              onClick={() => handleAnimeClick(anime)}
+            />
           ))}
         </div>
       )}

@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import { AnimeData } from "@/types/anime";
-import { getSeasonUpcoming } from "@/lib/api";
+import { getUpcomingAnime, convertToAnimeData, AniListAnime } from "@/lib/anilist";
 import { AnimeCard } from "@/components/anime/AnimeCard";
 import { Calendar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Upcoming = () => {
+  const navigate = useNavigate();
   const [upcomingAnimes, setUpcomingAnimes] = useState<AnimeData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const result = await getSeasonUpcoming();
-        setUpcomingAnimes(result.data || []);
+        const result = await getUpcomingAnime(1, 30);
+        setUpcomingAnimes((result.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
       } catch (error) {
         console.error("Failed to load upcoming anime:", error);
       } finally {
@@ -22,6 +24,11 @@ const Upcoming = () => {
 
     loadData();
   }, []);
+
+  const handleAnimeClick = (anime: AnimeData) => {
+    const id = (anime as any).anilist_id || anime.mal_id;
+    navigate(`/anime/${id}`);
+  };
 
   if (loading) {
     return (
@@ -43,7 +50,12 @@ const Upcoming = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {upcomingAnimes.map((anime) => (
-          <AnimeCard key={anime.mal_id} anime={anime} variant="compact" />
+          <AnimeCard 
+            key={anime.mal_id} 
+            anime={anime} 
+            variant="compact"
+            onClick={() => handleAnimeClick(anime)}
+          />
         ))}
       </div>
     </div>

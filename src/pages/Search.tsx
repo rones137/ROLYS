@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { AnimeData } from "@/types/anime";
-import { searchAnime } from "@/lib/api";
+import { searchAnimeAniList, convertToAnimeData, AniListAnime } from "@/lib/anilist";
 import { AnimeCard } from "@/components/anime/AnimeCard";
 import { Search as SearchIcon } from "lucide-react";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const query = searchParams.get("q") || "";
   const [results, setResults] = useState<AnimeData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,8 +21,8 @@ const Search = () => {
 
       try {
         setLoading(true);
-        const result = await searchAnime(query);
-        setResults(result.data || []);
+        const result = await searchAnimeAniList(query, 1, 30);
+        setResults((result.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
       } catch (error) {
         console.error("Search failed:", error);
       } finally {
@@ -31,6 +32,11 @@ const Search = () => {
 
     loadResults();
   }, [query]);
+
+  const handleAnimeClick = (anime: AnimeData) => {
+    const id = (anime as any).anilist_id || anime.mal_id;
+    navigate(`/anime/${id}`);
+  };
 
   if (!query) {
     return (
@@ -71,7 +77,12 @@ const Search = () => {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {results.map((anime) => (
-            <AnimeCard key={anime.mal_id} anime={anime} variant="compact" />
+            <AnimeCard 
+              key={anime.mal_id} 
+              anime={anime} 
+              variant="compact"
+              onClick={() => handleAnimeClick(anime)}
+            />
           ))}
         </div>
       )}
