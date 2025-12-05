@@ -1,6 +1,6 @@
 import { AnimeData } from "@/types/anime";
 import { Star, Plus, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { addToMyList, removeFromMyList, isInMyList } from "@/lib/storage";
 import { toast } from "sonner";
 
@@ -11,14 +11,19 @@ interface AnimeCardProps {
 }
 
 export const AnimeCard = ({ anime, onClick, variant = "default" }: AnimeCardProps) => {
-  const [inList, setInList] = useState(isInMyList(anime.mal_id));
+  const animeId = anime.mal_id;
+  const [inList, setInList] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    setInList(isInMyList(animeId));
+  }, [animeId]);
 
   const handleAddToList = (e: React.MouseEvent) => {
     e.stopPropagation();
     
     if (inList) {
-      removeFromMyList(anime.mal_id);
+      removeFromMyList(animeId);
       setInList(false);
       toast.success("Removed from My List");
     } else {
@@ -35,11 +40,12 @@ export const AnimeCard = ({ anime, onClick, variant = "default" }: AnimeCardProp
   const imageUrl = anime.images?.webp?.large_image_url || anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url;
   const title = anime.title_english || anime.title;
   const genre = anime.genres?.[0]?.name || anime.type || "Anime";
+  const score = anime.score;
 
   if (variant === "compact") {
     return (
       <div
-        className="group relative w-40 flex-shrink-0 cursor-pointer"
+        className="group relative w-full flex-shrink-0 cursor-pointer"
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -68,10 +74,10 @@ export const AnimeCard = ({ anime, onClick, variant = "default" }: AnimeCardProp
           </h4>
           <div className="flex items-center justify-between mt-1">
             <span className="text-xs text-muted-foreground truncate">{genre}</span>
-            {anime.score && (
+            {score && (
               <div className="flex items-center gap-1 text-xs font-bold text-yellow-400">
                 <Star className="w-3 h-3 fill-yellow-400" />
-                {anime.score.toFixed(1)}
+                {score.toFixed(1)}
               </div>
             )}
           </div>
@@ -112,10 +118,10 @@ export const AnimeCard = ({ anime, onClick, variant = "default" }: AnimeCardProp
         
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">{genre}</span>
-          {anime.score && (
+          {score && (
             <div className="flex items-center gap-1 font-bold text-yellow-400">
               <Star className="w-4 h-4 fill-yellow-400" />
-              {anime.score.toFixed(1)}
+              {score.toFixed(1)}
             </div>
           )}
         </div>

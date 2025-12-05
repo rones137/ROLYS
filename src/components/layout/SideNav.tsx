@@ -1,4 +1,4 @@
-import { Home, List, Search, TrendingUp, Star, Calendar, Newspaper, Users, Settings, Info, X } from "lucide-react";
+import { Home, List, Search, TrendingUp, Star, Calendar, Newspaper, Users, Settings, Info, X, Bot, Vote, BookOpen, Image } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/anime-runch-logo.png";
@@ -15,6 +15,13 @@ const PRIMARY_LINKS = [
   { to: "/rankings", label: "Rankings", icon: Star },
   { to: "/trending", label: "Trending", icon: TrendingUp },
   { to: "/upcoming", label: "Upcoming", icon: Calendar },
+];
+
+const CREATIVE_LINKS = [
+  { to: "/novel-editor", label: "Novel Editor", icon: BookOpen },
+  { to: "/manga-editor", label: "Manga Editor", icon: Image },
+  { to: "/votes", label: "Votes & Polls", icon: Vote },
+  { to: "/barint", label: "Barint AI", icon: Bot },
 ];
 
 const SECONDARY_LINKS = [
@@ -83,9 +90,16 @@ export const SideNav = ({ isOpen, onClose }: SideNavProps) => {
         </div>
 
         {/* Navigation Links */}
-        <div className="p-4 space-y-8">
+        <div className="p-4 space-y-6">
           <div className="space-y-1">
             {PRIMARY_LINKS.map((link) => (
+              <NavLink key={link.to} {...link} />
+            ))}
+          </div>
+
+          <div className="border-t border-sidebar-border pt-4 space-y-1">
+            <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Creative</p>
+            {CREATIVE_LINKS.map((link) => (
               <NavLink key={link.to} {...link} />
             ))}
           </div>

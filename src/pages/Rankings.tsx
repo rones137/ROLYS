@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import { AnimeData } from "@/types/anime";
-import { getTopAnime } from "@/lib/api";
+import { getTopAnimeAniList, convertToAnimeData, AniListAnime } from "@/lib/anilist";
 import { AnimeCard } from "@/components/anime/AnimeCard";
-import { Trophy, Star } from "lucide-react";
+import { Trophy } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Rankings = () => {
+  const navigate = useNavigate();
   const [topAnimes, setTopAnimes] = useState<AnimeData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const result = await getTopAnime(1);
-        setTopAnimes(result.data || []);
+        const result = await getTopAnimeAniList(1, 25);
+        setTopAnimes((result.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
       } catch (error) {
         console.error("Failed to load rankings:", error);
       } finally {
@@ -22,6 +24,11 @@ const Rankings = () => {
 
     loadData();
   }, []);
+
+  const handleAnimeClick = (anime: AnimeData) => {
+    const id = (anime as any).anilist_id || anime.mal_id;
+    navigate(`/anime/${id}`);
+  };
 
   if (loading) {
     return (
@@ -44,10 +51,10 @@ const Rankings = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {topAnimes.map((anime, index) => (
           <div key={anime.mal_id} className="relative">
-            <div className="absolute -top-3 -left-3 z-10 w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center font-black text-lg shadow-glow-red">
+            <div className="absolute -top-3 -left-3 z-10 w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center font-black text-lg shadow-glow-red text-primary-foreground">
               {index + 1}
             </div>
-            <AnimeCard anime={anime} />
+            <AnimeCard anime={anime} onClick={() => handleAnimeClick(anime)} />
           </div>
         ))}
       </div>

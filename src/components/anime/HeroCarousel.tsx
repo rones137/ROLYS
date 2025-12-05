@@ -61,7 +61,9 @@ export const HeroCarousel = ({ animes, onAnimeClick }: HeroCarouselProps) => {
 
   if (!currentAnime) return null;
 
-  const imageUrl = currentAnime.images?.jpg?.large_image_url || currentAnime.images?.jpg?.image_url;
+  // Support both AniList banner and cover images
+  const bannerImage = (currentAnime as any).bannerImage;
+  const imageUrl = bannerImage || currentAnime.images?.jpg?.large_image_url || currentAnime.images?.jpg?.image_url;
   const title = currentAnime.title_english || currentAnime.title;
 
   return (
@@ -80,9 +82,9 @@ export const HeroCarousel = ({ animes, onAnimeClick }: HeroCarouselProps) => {
         <div className="max-w-2xl space-y-6">
           {currentAnime.genres && currentAnime.genres.length > 0 && (
             <div className="flex items-center gap-2">
-              {currentAnime.genres.slice(0, 3).map((genre) => (
+              {currentAnime.genres.slice(0, 3).map((genre, idx) => (
                 <span
-                  key={genre.mal_id}
+                  key={genre.mal_id || idx}
                   className="px-3 py-1 bg-primary/20 backdrop-blur-sm text-primary text-sm font-semibold rounded-full border border-primary/30"
                 >
                   {genre.name}

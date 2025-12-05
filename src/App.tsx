@@ -19,6 +19,11 @@ import Community from "./pages/Community";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
+import AnimeDetail from "./pages/AnimeDetail";
+import NovelEditor from "./pages/NovelEditor";
+import MangaEditor from "./pages/MangaEditor";
+import Votes from "./pages/Votes";
+import Barint from "./pages/Barint";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +51,11 @@ const AppLayout = () => {
             <Route path="/community" element={<Community />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/help" element={<Placeholder title="Help & Support" description="Get help and support" />} />
+            <Route path="/anime/:id" element={<AnimeDetail />} />
+            <Route path="/novel-editor" element={<NovelEditor />} />
+            <Route path="/manga-editor" element={<MangaEditor />} />
+            <Route path="/votes" element={<Votes />} />
+            <Route path="/barint" element={<Barint />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
