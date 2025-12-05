@@ -500,8 +500,21 @@ const MangaEditor = () => {
                     <Button variant="outline" onClick={exportManga}>
                       <Download className="w-4 h-4 mr-2" /> Export
                     </Button>
-                    <Button variant="outline" onClick={() => toast.info("Open in external editor coming soon!")}>
-                      <ExternalLink className="w-4 h-4 mr-2" /> Open in Krita
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (currentPage?.imageUrl) {
+                          const link = document.createElement("a");
+                          link.href = currentPage.imageUrl;
+                          link.download = `${manga.title}-page-${(activePage || 0) + 1}.png`;
+                          link.click();
+                          toast.info("Image downloaded! Open it in Krita to edit, then re-upload when done.");
+                        } else {
+                          toast.error("Select a page first to edit in Krita");
+                        }
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" /> Edit in Krita
                     </Button>
                   </div>
                   <Button onClick={handlePublish} className="w-full">
