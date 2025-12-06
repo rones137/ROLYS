@@ -39,16 +39,18 @@ export const HeroCarousel = ({ animes, onAnimeClick }: HeroCarouselProps) => {
 
   const handleToggleList = () => {
     if (!currentAnime) return;
+    const animeId = (currentAnime as any).anilist_id || currentAnime.mal_id;
 
     if (inList) {
-      removeFromMyList(currentAnime.mal_id);
+      removeFromMyList(animeId);
       setInList(false);
       toast.success("Removed from My List");
     } else {
       addToMyList({
         ...currentAnime,
-        addedAt: Date.now(),
         watchStatus: "plan-to-watch",
+        category: 'Anime',
+        genre: currentAnime.genres?.[0]?.name || 'All',
       });
       setInList(true);
       toast.success("Added to My List");
