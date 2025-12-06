@@ -1,7 +1,12 @@
+export type MediaCategory = 'Anime' | 'Manga' | 'Light Novel' | 'Manhwa' | 'Manhua';
+
 export interface AnimeData {
   mal_id: number;
+  anilist_id?: number;
   title: string;
   title_english?: string;
+  title_native?: string;
+  mediaType?: 'ANIME' | 'MANGA';
   images: {
     jpg: {
       image_url: string;
@@ -21,6 +26,8 @@ export interface AnimeData {
   genres?: Array<{ mal_id: number; name: string }>;
   type?: string;
   episodes?: number;
+  chapters?: number;
+  volumes?: number;
   status?: string;
   aired?: {
     from?: string;
@@ -39,9 +46,13 @@ export interface AnimeData {
 
 export interface MyListItem extends AnimeData {
   addedAt: number;
-  watchStatus: 'watching' | 'completed' | 'plan-to-watch' | 'dropped';
+  watchStatus: 'watching' | 'completed' | 'plan-to-watch' | 'dropped' | 'on-hold';
   userRating?: number;
   progress?: number;
+  category: MediaCategory;
+  genre?: string;
+  userRank?: number;
+  notes?: string;
 }
 
 export interface SearchFilters {
@@ -53,3 +64,21 @@ export interface SearchFilters {
   order_by?: 'mal_id' | 'title' | 'start_date' | 'end_date' | 'score' | 'scored_by' | 'rank' | 'popularity' | 'members';
   sort?: 'asc' | 'desc';
 }
+
+export const CATEGORIES: MediaCategory[] = ['Anime', 'Manga', 'Light Novel', 'Manhwa', 'Manhua'];
+
+export const GENRES_MAP: Record<MediaCategory, string[]> = {
+  'Anime': ['All', 'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller', 'Mecha', 'Music', 'Psychological'],
+  'Manga': ['All', 'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Shounen', 'Shoujo', 'Seinen', 'Josei'],
+  'Light Novel': ['All', 'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Isekai', 'Harem', 'Supernatural'],
+  'Manhwa': ['All', 'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Martial Arts', 'School Life', 'Supernatural'],
+  'Manhua': ['All', 'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Martial Arts', 'Cultivation', 'Supernatural'],
+};
+
+export const WATCH_STATUSES = [
+  { value: 'watching', label: 'Watching/Reading' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'plan-to-watch', label: 'Plan to Watch/Read' },
+  { value: 'on-hold', label: 'On Hold' },
+  { value: 'dropped', label: 'Dropped' },
+] as const;

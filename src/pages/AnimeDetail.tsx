@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getAnimeByIdAniList, AniListAnime, getStreamingLinks, StreamingLink, convertToAnimeData } from "@/lib/anilist";
-import { addToMyList, removeFromMyList, isInMyList } from "@/lib/storage";
+import { getAnimeByIdAniList, AniListMedia, getStreamingLinks, StreamingLink, convertToAnimeData, getMediaByIdAniList } from "@/lib/anilist";
+import { addToMyList, removeFromMyList, isInMyList, detectCategory } from "@/lib/storage";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 const AnimeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [anime, setAnime] = useState<AniListAnime | null>(null);
+  const [anime, setAnime] = useState<AniListMedia | null>(null);
   const [loading, setLoading] = useState(true);
   const [inList, setInList] = useState(false);
   const [showStreamingDialog, setShowStreamingDialog] = useState(false);
@@ -33,13 +33,15 @@ const AnimeDetail = () => {
   const loadAnime = async (animeId: number) => {
     setLoading(true);
     try {
-      const data = await getAnimeByIdAniList(animeId);
+      const data = await getMediaByIdAniList(animeId);
       setAnime(data);
-      setInList(isInMyList(data.idMal || data.id));
-      setStreamingLinks(getStreamingLinks(data));
+      if (data) {
+        setInList(isInMyList(data.id));
+        setStreamingLinks(getStreamingLinks(data));
+      }
     } catch (error) {
       console.error("Failed to load anime:", error);
-      toast.error("Failed to load anime details");
+      toast.error("Failed to load details");
     } finally {
       setLoading(false);
     }
@@ -49,16 +51,18 @@ const AnimeDetail = () => {
     if (!anime) return;
     
     const animeData = convertToAnimeData(anime);
+    const category = detectCategory(animeData);
     
     if (inList) {
-      removeFromMyList(animeData.mal_id);
+      removeFromMyList(anime.id);
       setInList(false);
       toast.success("Removed from My List");
     } else {
       addToMyList({
         ...animeData,
-        addedAt: Date.now(),
         watchStatus: "plan-to-watch",
+        category,
+        genre: anime.genres?.[0] || 'All',
       });
       setInList(true);
       toast.success("Added to My List");

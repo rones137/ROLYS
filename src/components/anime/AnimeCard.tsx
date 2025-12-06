@@ -1,7 +1,7 @@
 import { AnimeData } from "@/types/anime";
 import { Star, Plus, Check } from "lucide-react";
 import { useState, useEffect } from "react";
-import { addToMyList, removeFromMyList, isInMyList } from "@/lib/storage";
+import { addToMyList, removeFromMyList, isInMyList, detectCategory } from "@/lib/storage";
 import { toast } from "sonner";
 
 interface AnimeCardProps {
@@ -11,7 +11,7 @@ interface AnimeCardProps {
 }
 
 export const AnimeCard = ({ anime, onClick, variant = "default" }: AnimeCardProps) => {
-  const animeId = anime.mal_id;
+  const animeId = (anime as any).anilist_id || anime.mal_id;
   const [inList, setInList] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -27,10 +27,12 @@ export const AnimeCard = ({ anime, onClick, variant = "default" }: AnimeCardProp
       setInList(false);
       toast.success("Removed from My List");
     } else {
+      const category = detectCategory(anime);
       addToMyList({
         ...anime,
-        addedAt: Date.now(),
         watchStatus: "plan-to-watch",
+        category,
+        genre: anime.genres?.[0]?.name || 'All',
       });
       setInList(true);
       toast.success("Added to My List");

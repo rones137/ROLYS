@@ -1,91 +1,79 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { AnimeData } from "@/types/anime";
-import { searchAnimeAniList, convertToAnimeData, AniListAnime } from "@/lib/anilist";
-import { AnimeCard } from "@/components/anime/AnimeCard";
-import { Search as SearchIcon } from "lucide-react";
+import { searchAllMedia, AniListMedia, SearchResult } from "@/lib/anilist";
+import { Loader2, Search as SearchIcon, Tv, BookOpen, BookText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const query = searchParams.get("q") || "";
-  const [results, setResults] = useState<AnimeData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [results, setResults] = useState<SearchResult>({ anime: [], manga: [], novels: [] });
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
-    const loadResults = async () => {
-      if (!query) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const result = await searchAnimeAniList(query, 1, 30);
-        setResults((result.media || []).map((a: AniListAnime) => convertToAnimeData(a)));
-      } catch (error) {
-        console.error("Search failed:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadResults();
+    if (query) {
+      setLoading(true);
+      searchAllMedia(query).then(setResults).finally(() => setLoading(false));
+    }
   }, [query]);
 
-  const handleAnimeClick = (anime: AnimeData) => {
-    const id = (anime as any).anilist_id || anime.mal_id;
-    navigate(`/anime/${id}`);
-  };
+  const MediaCard = ({ item }: { item: AniListMedia }) => (
+    <Card className="cursor-pointer hover:shadow-glow-red transition-all" onClick={() => navigate(`/anime/${item.id}`)}>
+      <CardContent className="p-0 flex gap-4">
+        <img src={item.coverImage.medium} alt={item.title.romaji} className="w-24 h-36 object-cover rounded-l-lg" />
+        <div className="py-3 pr-4 flex-1">
+          <Badge variant="secondary" className="mb-2">
+            {item.type === 'ANIME' ? 'Anime' : item.format === 'NOVEL' ? 'Light Novel' : 'Manga'}
+          </Badge>
+          <h3 className="font-bold line-clamp-1">{item.title.english || item.title.romaji}</h3>
+          {item.title.native && <p className="text-xs text-muted-foreground">{item.title.native}</p>}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-  if (!query) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-        <SearchIcon className="w-24 h-24 text-muted-foreground mb-6" />
-        <h2 className="text-3xl font-bold text-foreground mb-3">Start Searching</h2>
-        <p className="text-muted-foreground">Use the search bar above to find anime</p>
-      </div>
-    );
-  }
+  const total = results.anime.length + results.manga.length + results.novels.length;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (!query) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+      <SearchIcon className="w-24 h-24 text-muted-foreground mb-6" />
+      <h2 className="text-3xl font-bold mb-3">Search for Content</h2>
+      <p className="text-muted-foreground">Search anime, manga, light novels in English or Japanese.</p>
+    </div>
+  );
+
+  if (loading) return <div className="flex justify-center min-h-[60vh]"><Loader2 className="w-12 h-12 animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-black text-foreground border-l-4 border-primary pl-4 mb-2">
-          Search Results
-        </h1>
-        <p className="text-muted-foreground pl-5">
-          {results.length} results for "{query}"
-        </p>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-black border-l-4 border-primary pl-4">Search Results</h1>
+      <p className="text-muted-foreground pl-5">{total} results for "{query}"</p>
 
-      {results.length === 0 ? (
-        <div className="text-center py-16">
-          <SearchIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <p className="text-xl text-muted-foreground">
-            No results found for "{query}"
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-          {results.map((anime) => (
-            <AnimeCard 
-              key={anime.mal_id} 
-              anime={anime} 
-              variant="compact"
-              onClick={() => handleAnimeClick(anime)}
-            />
-          ))}
-        </div>
-      )}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="all">All ({total})</TabsTrigger>
+          <TabsTrigger value="anime"><Tv className="w-4 h-4 mr-1" />Anime ({results.anime.length})</TabsTrigger>
+          <TabsTrigger value="manga"><BookOpen className="w-4 h-4 mr-1" />Manga ({results.manga.length})</TabsTrigger>
+          <TabsTrigger value="novels"><BookText className="w-4 h-4 mr-1" />Novels ({results.novels.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all" className="grid gap-4 md:grid-cols-2">
+          {[...results.anime, ...results.manga, ...results.novels].map(item => <MediaCard key={item.id} item={item} />)}
+        </TabsContent>
+        <TabsContent value="anime" className="grid gap-4 md:grid-cols-2">
+          {results.anime.map(item => <MediaCard key={item.id} item={item} />)}
+        </TabsContent>
+        <TabsContent value="manga" className="grid gap-4 md:grid-cols-2">
+          {results.manga.map(item => <MediaCard key={item.id} item={item} />)}
+        </TabsContent>
+        <TabsContent value="novels" className="grid gap-4 md:grid-cols-2">
+          {results.novels.map(item => <MediaCard key={item.id} item={item} />)}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
