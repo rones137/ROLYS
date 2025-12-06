@@ -1,4 +1,4 @@
-import { Menu, Search, Bell, LogIn, LogOut, User, Settings } from "lucide-react";
+import { Menu, Search, Bell, LogIn, LogOut, User, Settings, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
@@ -7,6 +7,7 @@ import { SignInDialog } from "@/components/auth/SignInDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,17 +52,26 @@ export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
     navigate('/');
   };
 
+  const getInitials = () => {
+    if (profile?.display_name) {
+      return profile.display_name.slice(0, 2).toUpperCase();
+    }
+    if (profile?.username) {
+      return profile.username.slice(0, 2).toUpperCase();
+    }
+    return user?.email?.slice(0, 2).toUpperCase() || 'U';
+  };
+
   return (
     <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center gap-4">
-          {/* Menu Button */}
+          {/* Hamburger Menu Button - Always visible */}
           <Button
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
-            className="md:hidden"
-            aria-label="Open menu"
+            aria-label="Toggle menu"
           >
             <Menu className="w-6 h-6" />
           </Button>
@@ -72,7 +82,7 @@ export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
-                placeholder="Search anime, characters, studios..."
+                placeholder="Search anime, manga, novels..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-muted/50 border-border focus:border-primary focus-visible:ring-primary"
@@ -95,8 +105,13 @@ export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <User className="w-5 h-5" />
+                  <Button variant="ghost" size="icon" className="rounded-full p-0 w-10 h-10">
+                    <Avatar className="w-9 h-9 border-2 border-primary/50">
+                      <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.display_name || 'User'} />
+                      <AvatarFallback className="bg-primary/20 text-primary font-semibold text-sm">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -105,14 +120,18 @@ export const TopHeader = ({ onMenuClick }: TopHeaderProps) => {
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Profile
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/settings')}>
                     <Settings className="w-4 h-4 mr-2" />
-                    Settings
+                    Account Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
+                    Log Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
