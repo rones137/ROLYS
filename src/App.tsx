@@ -24,6 +24,7 @@ import NovelEditor from "./pages/NovelEditor";
 import MangaEditor from "./pages/MangaEditor";
 import Votes from "./pages/Votes";
 import Barint from "./pages/Barint";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -35,8 +36,8 @@ const AppLayout = () => {
     <div className="min-h-screen bg-background">
       <SideNav isOpen={sideNavOpen} onClose={() => setSideNavOpen(false)} />
       
-      <div className="md:ml-72 min-h-screen">
-        <TopHeader onMenuClick={() => setSideNavOpen(true)} />
+      <div className="min-h-screen">
+        <TopHeader onMenuClick={() => setSideNavOpen(!sideNavOpen)} />
         
         <main className="container mx-auto px-4 py-8">
           <Routes>
@@ -56,6 +57,7 @@ const AppLayout = () => {
             <Route path="/manga-editor" element={<MangaEditor />} />
             <Route path="/votes" element={<Votes />} />
             <Route path="/barint" element={<Barint />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

@@ -10,7 +10,7 @@ interface SideNavProps {
 
 const PRIMARY_LINKS = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/my-list", label: "My Anime List", icon: List },
+  { to: "/my-list", label: "My List", icon: List },
   { to: "/lookup", label: "Lookup", icon: Search },
   { to: "/rankings", label: "Rankings", icon: Star },
   { to: "/trending", label: "Trending", icon: TrendingUp },
@@ -59,7 +59,7 @@ export const SideNav = ({ isOpen, onClose }: SideNavProps) => {
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/70 z-40 md:hidden"
+          className="fixed inset-0 bg-black/70 z-40"
           onClick={onClose}
         />
       )}
@@ -68,7 +68,7 @@ export const SideNav = ({ isOpen, onClose }: SideNavProps) => {
       <nav
         className={cn(
           "fixed left-0 top-0 h-screen w-72 bg-sidebar border-r border-sidebar-border shadow-2xl z-50 transition-transform duration-300 overflow-y-auto",
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Header */}

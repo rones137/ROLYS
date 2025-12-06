@@ -72,7 +72,7 @@ export const AnimeCarousel = ({ title, animes, icon, onAnimeClick }: AnimeCarous
         onScroll={checkScrollButtons}
       >
         {animes.map((anime) => (
-          <div key={anime.mal_id} className="snap-start">
+          <div key={anime.mal_id} className="snap-start w-[180px] flex-shrink-0">
             <AnimeCard
               anime={anime}
               variant="compact"
