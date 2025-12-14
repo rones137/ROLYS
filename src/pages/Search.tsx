@@ -31,55 +31,122 @@ const Search = () => {
   const [userManga, setUserManga] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (query) {
-      setLoading(true);
-      Promise.all([
-        searchAllMedia(query),
-        searchStaff(query),
-        searchUsers(query),
-        searchUserContent(query)
-      ]).then(([mediaResults, staffData, users, content]) => {
-        setResults(mediaResults);
-        setStaffResults(staffData?.staff || []);
-        setUserResults(users);
-        setUserNovels(content.novels);
-        setUserManga(content.manga);
-      }).finally(() => setLoading(false));
+    if (!query) {
+      setResults({ anime: [], manga: [], novels: [] });
+      setStaffResults([]);
+      setUserResults([]);
+      setUserNovels([]);
+      setUserManga([]);
+      setError(null);
+      return;
     }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    const run = async () => {
+      const mediaPromise = searchAllMedia(query).catch((err) => {
+        console.error("Media search error:", err);
+        setError("Anime / manga data service is temporarily unavailable. User results will still show.");
+        return { anime: [], manga: [], novels: [] } as SearchResult;
+      });
+
+      const staffPromise = searchStaff(query).catch((err) => {
+        console.error("Staff search error:", err);
+        return { staff: [] } as any;
+      });
+
+      const usersPromise = searchUsers(query).catch((err) => {
+        console.error("User search error:", err);
+        return [] as UserProfile[];
+      });
+
+      const contentPromise = searchUserContent(query).catch((err) => {
+        console.error("User content search error:", err);
+        return { novels: [], manga: [] } as { novels: any[]; manga: any[] };
+      });
+
+      const [mediaResults, staffData, users, content] = await Promise.all([
+        mediaPromise,
+        staffPromise,
+        usersPromise,
+        contentPromise,
+      ]);
+
+      if (cancelled) return;
+
+      setResults(mediaResults as SearchResult);
+      setStaffResults((staffData as any)?.staff || []);
+      setUserResults(users as UserProfile[]);
+      setUserNovels((content as any).novels || []);
+      setUserManga((content as any).manga || []);
+    };
+
+    run().finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [query]);
 
   const searchUsers = async (search: string): Promise<UserProfile[]> => {
-    const { data } = await supabase
+    const normalized = search.replace(/\s+/g, "");
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .or(`username.ilike.%${search}%,display_name.ilike.%${search}%`)
+      .or(
+        `username.ilike.%${search}%,display_name.ilike.%${search}%,username.ilike.%${normalized}%,display_name.ilike.%${normalized}%`
+      )
       .limit(10);
+
+    if (error) {
+      console.error('User search error:', error);
+      return [];
+    }
+
     return data || [];
   };
 
   const searchUserContent = async (search: string) => {
-    const [novelsResult, mangaResult] = await Promise.all([
-      supabase
+    try {
+      const { data: novelsData, error: novelsError } = await supabase
         .from('novels')
-        .select('*, profiles!novels_author_id_fkey(username, display_name, avatar_url)')
+        .select('*')
         .eq('status', 'published')
         .ilike('title', `%${search}%`)
         .order('upvote_count', { ascending: false })
-        .limit(10),
-      supabase
+        .limit(10);
+
+      if (novelsError) {
+        console.error('User novels search error:', novelsError);
+      }
+
+      const { data: mangaData, error: mangaError } = await supabase
         .from('manga')
-        .select('*, profiles!manga_author_id_fkey(username, display_name, avatar_url)')
+        .select('*')
         .eq('status', 'published')
         .ilike('title', `%${search}%`)
         .order('upvote_count', { ascending: false })
-        .limit(10)
-    ]);
-    return {
-      novels: novelsResult.data || [],
-      manga: mangaResult.data || []
-    };
+        .limit(10);
+
+      if (mangaError) {
+        console.error('User manga search error:', mangaError);
+      }
+
+      return {
+        novels: novelsData || [],
+        manga: mangaData || []
+      };
+    } catch (err) {
+      console.error('User content search error:', err);
+      return { novels: [], manga: [] };
+    }
   };
 
   const getMediaRoute = (item: AniListMedia) => {
@@ -302,6 +369,9 @@ const Search = () => {
       <div>
         <h1 className="text-3xl font-black border-l-4 border-primary pl-4">Search Results</h1>
         <p className="text-muted-foreground pl-5 mt-1">{total} results for "{query}"</p>
+        {error && (
+          <p className="text-sm text-destructive pl-5 mt-1">{error}</p>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
