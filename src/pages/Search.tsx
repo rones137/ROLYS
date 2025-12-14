@@ -1,11 +1,24 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { searchAllMedia, searchStaff, AniListMedia, AniListStaff, SearchResult, getFormatSpecificInfo, getStreamingLinks } from "@/lib/anilist";
-import { Loader2, Search as SearchIcon, Tv, BookOpen, BookText, User, Star, Calendar, Play, Library } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Search as SearchIcon, Tv, BookOpen, BookText, User, Star, Calendar, Play, Library, Users, ThumbsUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+interface UserProfile {
+  id: string;
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  novels?: any[];
+  manga?: any[];
+}
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -13,6 +26,9 @@ const Search = () => {
   const navigate = useNavigate();
   const [results, setResults] = useState<SearchResult>({ anime: [], manga: [], novels: [] });
   const [staffResults, setStaffResults] = useState<AniListStaff[]>([]);
+  const [userResults, setUserResults] = useState<UserProfile[]>([]);
+  const [userNovels, setUserNovels] = useState<any[]>([]);
+  const [userManga, setUserManga] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -21,13 +37,50 @@ const Search = () => {
       setLoading(true);
       Promise.all([
         searchAllMedia(query),
-        searchStaff(query)
-      ]).then(([mediaResults, staff]) => {
+        searchStaff(query),
+        searchUsers(query),
+        searchUserContent(query)
+      ]).then(([mediaResults, staffData, users, content]) => {
         setResults(mediaResults);
-        setStaffResults(staff);
+        setStaffResults(staffData?.staff || []);
+        setUserResults(users);
+        setUserNovels(content.novels);
+        setUserManga(content.manga);
       }).finally(() => setLoading(false));
     }
   }, [query]);
+
+  const searchUsers = async (search: string): Promise<UserProfile[]> => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .or(`username.ilike.%${search}%,display_name.ilike.%${search}%`)
+      .limit(10);
+    return data || [];
+  };
+
+  const searchUserContent = async (search: string) => {
+    const [novelsResult, mangaResult] = await Promise.all([
+      supabase
+        .from('novels')
+        .select('*, profiles!novels_author_id_fkey(username, display_name, avatar_url)')
+        .eq('status', 'published')
+        .ilike('title', `%${search}%`)
+        .order('upvote_count', { ascending: false })
+        .limit(10),
+      supabase
+        .from('manga')
+        .select('*, profiles!manga_author_id_fkey(username, display_name, avatar_url)')
+        .eq('status', 'published')
+        .ilike('title', `%${search}%`)
+        .order('upvote_count', { ascending: false })
+        .limit(10)
+    ]);
+    return {
+      novels: novelsResult.data || [],
+      manga: mangaResult.data || []
+    };
+  };
 
   const getMediaRoute = (item: AniListMedia) => {
     if (item.type === 'ANIME') return `/anime/${item.id}`;
@@ -141,19 +194,19 @@ const Search = () => {
     >
       <CardContent className="p-0 flex gap-4">
         <img 
-          src={staff.image.medium} 
-          alt={staff.name.full} 
+          src={staff.image?.medium || '/placeholder.svg'} 
+          alt={staff.name?.full || 'Staff'} 
           className="w-20 h-28 object-cover flex-shrink-0" 
         />
         <div className="py-3 pr-4 flex-1">
           <Badge variant="secondary" className="mb-2 bg-orange-500/20 text-orange-400">
             <User className="w-3 h-3 mr-1" /> Creator
           </Badge>
-          <h3 className="font-bold line-clamp-1">{staff.name.full}</h3>
-          {staff.name.native && (
+          <h3 className="font-bold line-clamp-1">{staff.name?.full || 'Unknown'}</h3>
+          {staff.name?.native && (
             <p className="text-xs text-muted-foreground">{staff.name.native}</p>
           )}
-          {staff.primaryOccupations && staff.primaryOccupations.length > 0 && (
+          {Array.isArray(staff.primaryOccupations) && staff.primaryOccupations.length > 0 && (
             <p className="text-xs text-muted-foreground mt-1">
               {staff.primaryOccupations.slice(0, 2).join(', ')}
             </p>
@@ -163,7 +216,69 @@ const Search = () => {
     </Card>
   );
 
-  const total = results.anime.length + results.manga.length + results.novels.length + staffResults.length;
+  const UserCard = ({ profile }: { profile: UserProfile }) => (
+    <Card 
+      className="cursor-pointer hover:shadow-glow-red hover:ring-1 ring-primary/50 transition-all overflow-hidden"
+      onClick={() => navigate(`/user/${profile.user_id}`)}
+    >
+      <CardContent className="p-0 flex gap-4">
+        <Avatar className="w-20 h-20 m-3 flex-shrink-0">
+          <AvatarImage src={profile.avatar_url || undefined} />
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            {(profile.display_name || profile.username)?.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="py-3 pr-4 flex-1">
+          <Badge variant="secondary" className="mb-2 bg-cyan-500/20 text-cyan-400">
+            <Users className="w-3 h-3 mr-1" /> User
+          </Badge>
+          <h3 className="font-bold line-clamp-1">{profile.display_name || profile.username}</h3>
+          <p className="text-xs text-muted-foreground">@{profile.username}</p>
+          {profile.bio && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{profile.bio}</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const UserContentCard = ({ item, type }: { item: any; type: 'novel' | 'manga' }) => (
+    <Card 
+      className="cursor-pointer hover:shadow-glow-red hover:ring-1 ring-primary/50 transition-all overflow-hidden group"
+      onClick={() => navigate(`/read/${type}/${item.id}`)}
+    >
+      <CardContent className="p-0 flex gap-4">
+        <img 
+          src={item.cover_url || '/placeholder.svg'} 
+          alt={item.title} 
+          className="w-28 h-40 object-cover flex-shrink-0 group-hover:scale-105 transition-transform" 
+        />
+        <div className="py-3 pr-4 flex-1 flex flex-col">
+          <div className="flex gap-2 mb-2 flex-wrap">
+            <Badge variant="secondary" className={type === 'novel' ? "bg-purple-500/20 text-purple-400" : "bg-green-500/20 text-green-400"}>
+              {type === 'novel' ? 'User Novel' : 'User Manga'}
+            </Badge>
+          </div>
+          
+          <h3 className="font-bold line-clamp-1 text-foreground">{item.title}</h3>
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
+
+          <div className="mt-auto pt-2 space-y-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <ThumbsUp className="w-3 h-3" />
+              <span>{item.upvote_count || 0} upvotes</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <User className="w-3 h-3" />
+              <span>by {item.profiles?.display_name || item.profiles?.username || 'Unknown'}</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const total = results.anime.length + results.manga.length + results.novels.length + staffResults.length + userResults.length + userNovels.length + userManga.length;
 
   if (!query) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center animate-fade-in">
@@ -204,10 +319,19 @@ const Search = () => {
           <TabsTrigger value="creators">
             <User className="w-4 h-4 mr-1" />Creators ({staffResults.length})
           </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="w-4 h-4 mr-1" />Users ({userResults.length})
+          </TabsTrigger>
+          <TabsTrigger value="user-content">
+            <ThumbsUp className="w-4 h-4 mr-1" />User Works ({userNovels.length + userManga.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="grid gap-4 md:grid-cols-2">
-          {staffResults.slice(0, 4).map(staff => <StaffCard key={`staff-${staff.id}`} staff={staff} />)}
+          {userResults.slice(0, 2).map(user => <UserCard key={`user-${user.id}`} profile={user} />)}
+          {staffResults.slice(0, 2).map(staff => <StaffCard key={`staff-${staff.id}`} staff={staff} />)}
+          {userNovels.slice(0, 2).map(novel => <UserContentCard key={`unovel-${novel.id}`} item={novel} type="novel" />)}
+          {userManga.slice(0, 2).map(manga => <UserContentCard key={`umanga-${manga.id}`} item={manga} type="manga" />)}
           {[...results.anime, ...results.manga, ...results.novels].map(item => (
             <MediaCard key={`media-${item.id}`} item={item} />
           ))}
@@ -250,6 +374,25 @@ const Search = () => {
           {staffResults.length === 0 && (
             <p className="text-muted-foreground col-span-3 text-center py-12">
               No creators found for "{query}"
+            </p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="users" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {userResults.map(user => <UserCard key={user.id} profile={user} />)}
+          {userResults.length === 0 && (
+            <p className="text-muted-foreground col-span-3 text-center py-12">
+              No users found for "{query}"
+            </p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="user-content" className="grid gap-4 md:grid-cols-2">
+          {userNovels.map(novel => <UserContentCard key={novel.id} item={novel} type="novel" />)}
+          {userManga.map(manga => <UserContentCard key={manga.id} item={manga} type="manga" />)}
+          {userNovels.length === 0 && userManga.length === 0 && (
+            <p className="text-muted-foreground col-span-2 text-center py-12">
+              No user works found for "{query}"
             </p>
           )}
         </TabsContent>

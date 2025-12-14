@@ -328,6 +328,7 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string
+          upvote_count: number | null
           view_count: number | null
         }
         Insert: {
@@ -344,6 +345,7 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string
+          upvote_count?: number | null
           view_count?: number | null
         }
         Update: {
@@ -360,6 +362,7 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+          upvote_count?: number | null
           view_count?: number | null
         }
         Relationships: []
@@ -412,6 +415,7 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string
+          upvote_count: number | null
           view_count: number | null
         }
         Insert: {
@@ -428,6 +432,7 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string
+          upvote_count?: number | null
           view_count?: number | null
         }
         Update: {
@@ -444,6 +449,7 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+          upvote_count?: number | null
           view_count?: number | null
         }
         Relationships: []
@@ -712,6 +718,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          media_id: number
+          media_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_id: number
+          media_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_id?: number
+          media_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
