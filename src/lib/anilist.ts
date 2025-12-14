@@ -31,7 +31,7 @@ export interface AniListMedia {
   genres: string[];
   tags: Array<{ name: string; rank: number }>;
   studios: { nodes: Array<{ name: string; isAnimationStudio: boolean }> };
-  staff: { nodes: Array<{ name: { full: string }; primaryOccupations: string[] }> };
+  staff: { nodes: Array<{ id: number; name: { full: string; native: string | null }; image: { medium: string }; primaryOccupations: string[]; description: string | null }> };
   characters: { nodes: Array<{ name: { full: string }; image: { medium: string } }> };
   trailer: { id: string; site: string } | null;
   externalLinks: Array<{ url: string; site: string; icon: string | null; color: string | null }>;
@@ -41,6 +41,43 @@ export interface AniListMedia {
   endDate: { year: number | null; month: number | null; day: number | null };
   nextAiringEpisode: { airingAt: number; episode: number } | null;
   streamingEpisodes: Array<{ title: string; thumbnail: string; url: string; site: string }>;
+}
+
+export interface AniListStaff {
+  id: number;
+  name: {
+    full: string;
+    native: string | null;
+    alternative: string[];
+  };
+  image: {
+    large: string;
+    medium: string;
+  };
+  description: string | null;
+  primaryOccupations: string[];
+  gender: string | null;
+  dateOfBirth: { year: number | null; month: number | null; day: number | null };
+  dateOfDeath: { year: number | null; month: number | null; day: number | null };
+  age: number | null;
+  yearsActive: number[];
+  homeTown: string | null;
+  bloodType: string | null;
+  staffMedia: {
+    edges: Array<{
+      staffRole: string;
+      node: AniListMedia;
+    }>;
+  };
+}
+
+export interface AniListStudio {
+  id: number;
+  name: string;
+  isAnimationStudio: boolean;
+  media: {
+    nodes: AniListMedia[];
+  };
 }
 
 // Keep backward compatibility
@@ -60,7 +97,7 @@ export interface SearchResult {
 }
 
 const mediaQuery = `
-query ($id: Int, $search: String, $page: Int, $perPage: Int, $sort: [MediaSort], $season: MediaSeason, $seasonYear: Int, $status: MediaStatus, $format: MediaFormat, $genre: String, $type: MediaType) {
+query ($id: Int, $search: String, $page: Int, $perPage: Int, $sort: [MediaSort], $season: MediaSeason, $seasonYear: Int, $status: MediaStatus, $format: MediaFormat, $genre: String, $type: MediaType, $format_in: [MediaFormat]) {
   Page(page: $page, perPage: $perPage) {
     pageInfo {
       total
@@ -68,7 +105,7 @@ query ($id: Int, $search: String, $page: Int, $perPage: Int, $sort: [MediaSort],
       lastPage
       hasNextPage
     }
-    media(id: $id, search: $search, type: $type, sort: $sort, season: $season, seasonYear: $seasonYear, status: $status, format: $format, genre: $genre) {
+    media(id: $id, search: $search, type: $type, sort: $sort, season: $season, seasonYear: $seasonYear, status: $status, format: $format, genre: $genre, format_in: $format_in) {
       id
       idMal
       type
@@ -106,10 +143,16 @@ query ($id: Int, $search: String, $page: Int, $perPage: Int, $sort: [MediaSort],
       }
       staff(perPage: 10) {
         nodes {
+          id
           name {
             full
+            native
+          }
+          image {
+            medium
           }
           primaryOccupations
+          description
         }
       }
       characters(perPage: 10) {
@@ -185,6 +228,111 @@ query ($id: Int, $search: String, $page: Int, $perPage: Int, $sort: [MediaSort],
         thumbnail
         url
         site
+      }
+    }
+  }
+}
+`;
+
+const staffQuery = `
+query ($search: String, $id: Int, $page: Int, $perPage: Int) {
+  Page(page: $page, perPage: $perPage) {
+    pageInfo {
+      total
+      currentPage
+      lastPage
+      hasNextPage
+    }
+    staff(search: $search, id: $id) {
+      id
+      name {
+        full
+        native
+        alternative
+      }
+      image {
+        large
+        medium
+      }
+      description
+      primaryOccupations
+      gender
+      dateOfBirth {
+        year
+        month
+        day
+      }
+      dateOfDeath {
+        year
+        month
+        day
+      }
+      age
+      yearsActive
+      homeTown
+      bloodType
+      staffMedia(perPage: 25, sort: [POPULARITY_DESC]) {
+        edges {
+          staffRole
+          node {
+            id
+            type
+            format
+            title {
+              romaji
+              english
+              native
+            }
+            coverImage {
+              medium
+              large
+            }
+            averageScore
+            popularity
+            status
+            episodes
+            chapters
+            volumes
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+const studioQuery = `
+query ($search: String, $id: Int, $page: Int, $perPage: Int) {
+  Page(page: $page, perPage: $perPage) {
+    pageInfo {
+      total
+      currentPage
+      lastPage
+      hasNextPage
+    }
+    studios(search: $search, id: $id) {
+      id
+      name
+      isAnimationStudio
+      media(perPage: 25, sort: [POPULARITY_DESC]) {
+        nodes {
+          id
+          type
+          format
+          title {
+            romaji
+            english
+            native
+          }
+          coverImage {
+            medium
+            large
+          }
+          averageScore
+          popularity
+          status
+          episodes
+        }
       }
     }
   }
@@ -324,6 +472,30 @@ export const searchAllMedia = async (search: string, page = 1, perPage = 15): Pr
   return { anime: animeResults, manga, novels };
 };
 
+// Search for staff (directors, writers, artists, etc.)
+export const searchStaff = async (search: string, page = 1, perPage = 10) => {
+  const data = await fetchAniList(staffQuery, { search, page, perPage });
+  return data.Page;
+};
+
+// Get staff by ID
+export const getStaffById = async (id: number) => {
+  const data = await fetchAniList(staffQuery, { id });
+  return data.Page.staff?.[0] as AniListStaff | undefined;
+};
+
+// Search for studios
+export const searchStudios = async (search: string, page = 1, perPage = 10) => {
+  const data = await fetchAniList(studioQuery, { search, page, perPage });
+  return data.Page;
+};
+
+// Get studio by ID
+export const getStudioById = async (id: number) => {
+  const data = await fetchAniList(studioQuery, { id });
+  return data.Page.studios?.[0] as AniListStudio | undefined;
+};
+
 export const getAnimeByIdAniList = async (id: number) => {
   const data = await fetchAniList(animeQuery, { id, type: "ANIME" });
   return data.Page.media[0] as AniListMedia;
@@ -365,24 +537,74 @@ export const getMangaByGenre = async (genre: string, page = 1, perPage = 25) => 
   return data.Page;
 };
 
-// Get trending manga
+// Get trending manga (excludes novels)
 export const getTrendingManga = async (page = 1, perPage = 25) => {
   const data = await fetchAniList(mediaQuery, {
     page,
     perPage,
     type: "MANGA",
+    format_in: ["MANGA", "ONE_SHOT"],
     sort: ["TRENDING_DESC"],
   });
   return data.Page;
 };
 
-// Get top manga
+// Get top manga (excludes novels)
 export const getTopManga = async (page = 1, perPage = 25) => {
   const data = await fetchAniList(mediaQuery, {
     page,
     perPage,
     type: "MANGA",
+    format_in: ["MANGA", "ONE_SHOT"],
     sort: ["SCORE_DESC"],
+  });
+  return data.Page;
+};
+
+// Get popular manga
+export const getPopularManga = async (page = 1, perPage = 25) => {
+  const data = await fetchAniList(mediaQuery, {
+    page,
+    perPage,
+    type: "MANGA",
+    format_in: ["MANGA", "ONE_SHOT"],
+    sort: ["POPULARITY_DESC"],
+  });
+  return data.Page;
+};
+
+// Get trending light novels
+export const getTrendingNovels = async (page = 1, perPage = 25) => {
+  const data = await fetchAniList(mediaQuery, {
+    page,
+    perPage,
+    type: "MANGA",
+    format: "NOVEL",
+    sort: ["TRENDING_DESC"],
+  });
+  return data.Page;
+};
+
+// Get top light novels
+export const getTopNovels = async (page = 1, perPage = 25) => {
+  const data = await fetchAniList(mediaQuery, {
+    page,
+    perPage,
+    type: "MANGA",
+    format: "NOVEL",
+    sort: ["SCORE_DESC"],
+  });
+  return data.Page;
+};
+
+// Get popular light novels
+export const getPopularNovels = async (page = 1, perPage = 25) => {
+  const data = await fetchAniList(mediaQuery, {
+    page,
+    perPage,
+    type: "MANGA",
+    format: "NOVEL",
+    sort: ["POPULARITY_DESC"],
   });
   return data.Page;
 };
@@ -395,6 +617,7 @@ export const convertToAnimeData = (media: AniListMedia) => ({
   title_english: media.title.english,
   title_native: media.title.native,
   mediaType: media.type,
+  format: media.format,
   images: {
     jpg: {
       image_url: media.coverImage.medium,
@@ -431,6 +654,8 @@ export const convertToAnimeData = (media: AniListMedia) => ({
   streamingEpisodes: media.streamingEpisodes,
   bannerImage: media.bannerImage,
   nextAiringEpisode: media.nextAiringEpisode,
+  startDate: media.startDate,
+  endDate: media.endDate,
 });
 
 // Get streaming links for an anime
@@ -470,4 +695,36 @@ export const getStreamingLinks = (media: AniListMedia): StreamingLink[] => {
   }
   
   return links;
+};
+
+// Get format-specific info for display
+export const getFormatSpecificInfo = (media: AniListMedia) => {
+  const isAnime = media.type === 'ANIME';
+  const isManga = media.type === 'MANGA' && media.format !== 'NOVEL';
+  const isNovel = media.format === 'NOVEL';
+
+  const statusMap: Record<string, string> = {
+    'FINISHED': 'Completed',
+    'RELEASING': 'Ongoing',
+    'NOT_YET_RELEASED': 'Upcoming',
+    'CANCELLED': 'Cancelled',
+    'HIATUS': 'On Hiatus',
+  };
+
+  return {
+    isAnime,
+    isManga,
+    isNovel,
+    status: statusMap[media.status] || media.status,
+    // Anime specific
+    episodes: media.episodes,
+    nextEpisode: media.nextAiringEpisode,
+    // Manga/Novel specific
+    chapters: media.chapters,
+    volumes: media.volumes,
+    // Staff
+    staff: media.staff?.nodes || [],
+    // Studios (anime only)
+    studios: media.studios?.nodes?.filter(s => s.isAnimationStudio) || [],
+  };
 };

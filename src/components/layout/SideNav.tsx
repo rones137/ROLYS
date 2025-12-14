@@ -9,7 +9,9 @@ interface SideNavProps {
 }
 
 const PRIMARY_LINKS = [
-  { to: "/", label: "Home", icon: Home },
+  { to: "/", label: "Anime", icon: Home },
+  { to: "/manga-browse", label: "Manga", icon: BookOpen },
+  { to: "/novel-browse", label: "Light Novels", icon: BookOpen },
   { to: "/my-list", label: "My List", icon: List },
   { to: "/lookup", label: "Lookup", icon: Search },
   { to: "/rankings", label: "Rankings", icon: Star },

@@ -25,6 +25,10 @@ import MangaEditor from "./pages/MangaEditor";
 import Votes from "./pages/Votes";
 import Barint from "./pages/Barint";
 import Profile from "./pages/Profile";
+import MangaHome from "./pages/MangaHome";
+import NovelHome from "./pages/NovelHome";
+import MediaDetail from "./pages/MediaDetail";
+import StaffDetail from "./pages/StaffDetail";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +57,11 @@ const AppLayout = () => {
             <Route path="/settings" element={<Settings />} />
             <Route path="/help" element={<Placeholder title="Help & Support" description="Get help and support" />} />
             <Route path="/anime/:id" element={<AnimeDetail />} />
+            <Route path="/manga/:id" element={<MediaDetail />} />
+            <Route path="/novel/:id" element={<MediaDetail />} />
+            <Route path="/staff/:id" element={<StaffDetail />} />
+            <Route path="/manga-browse" element={<MangaHome />} />
+            <Route path="/novel-browse" element={<NovelHome />} />
             <Route path="/novel-editor" element={<NovelEditor />} />
             <Route path="/manga-editor" element={<MangaEditor />} />
             <Route path="/votes" element={<Votes />} />
