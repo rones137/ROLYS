@@ -8,9 +8,10 @@ import { toast } from "sonner";
 interface HeroCarouselProps {
   animes: AnimeData[];
   onAnimeClick?: (anime: AnimeData) => void;
+  mediaType?: 'anime' | 'manga' | 'novel';
 }
 
-export const HeroCarousel = ({ animes, onAnimeClick }: HeroCarouselProps) => {
+export const HeroCarousel = ({ animes, onAnimeClick, mediaType = 'anime' }: HeroCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inList, setInList] = useState(false);
 
@@ -69,7 +70,7 @@ export const HeroCarousel = ({ animes, onAnimeClick }: HeroCarouselProps) => {
   const title = currentAnime.title_english || currentAnime.title;
 
   return (
-    <div className="relative w-full h-[600px] rounded-3xl overflow-hidden shadow-elevated mb-12 group">
+    <div className="relative w-full h-[450px] rounded-3xl overflow-hidden shadow-elevated mb-12 group">
       {/* Background Image with Gradient Overlay */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
@@ -112,7 +113,7 @@ export const HeroCarousel = ({ animes, onAnimeClick }: HeroCarouselProps) => {
               className="bg-gradient-primary hover:opacity-90 text-primary-foreground font-bold text-lg px-8 py-6 rounded-full shadow-glow-red"
             >
               <Play className="w-5 h-5 mr-2 fill-current" />
-              Watch Now
+              {mediaType === 'anime' ? 'Watch Now' : 'Read Now'}
             </Button>
 
             <Button
