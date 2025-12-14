@@ -29,6 +29,9 @@ import MangaHome from "./pages/MangaHome";
 import NovelHome from "./pages/NovelHome";
 import MediaDetail from "./pages/MediaDetail";
 import StaffDetail from "./pages/StaffDetail";
+import UserProfile from "./pages/UserProfile";
+import NovelReader from "./pages/NovelReader";
+import MangaReader from "./pages/MangaReader";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +70,9 @@ const AppLayout = () => {
             <Route path="/votes" element={<Votes />} />
             <Route path="/barint" element={<Barint />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/user/:userId" element={<UserProfile />} />
+            <Route path="/read/novel/:id" element={<NovelReader />} />
+            <Route path="/read/manga/:id" element={<MangaReader />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
