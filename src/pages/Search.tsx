@@ -169,7 +169,7 @@ const Search = () => {
       >
         <CardContent className="p-0 flex gap-4">
           <img 
-            src={item.coverImage.medium} 
+            src={item.coverImage.extraLarge || item.coverImage.large || item.coverImage.medium} 
             alt={item.title.romaji} 
             className="w-28 h-40 object-cover flex-shrink-0 group-hover:scale-105 transition-transform" 
           />
