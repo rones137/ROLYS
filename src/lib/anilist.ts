@@ -620,12 +620,12 @@ export const convertToAnimeData = (media: AniListMedia) => ({
   format: media.format,
   images: {
     jpg: {
-      image_url: media.coverImage.medium,
-      large_image_url: media.coverImage.large || media.coverImage.extraLarge,
+      image_url: media.coverImage.extraLarge || media.coverImage.large || media.coverImage.medium,
+      large_image_url: media.coverImage.extraLarge || media.coverImage.large,
     },
     webp: {
-      image_url: media.coverImage.medium,
-      large_image_url: media.coverImage.large || media.coverImage.extraLarge,
+      image_url: media.coverImage.extraLarge || media.coverImage.large || media.coverImage.medium,
+      large_image_url: media.coverImage.extraLarge || media.coverImage.large,
     },
   },
   score: media.averageScore ? media.averageScore / 10 : undefined,
